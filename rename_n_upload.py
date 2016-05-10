@@ -2,6 +2,7 @@
 from os.path    import isfile, join
 from os         import system, path, listdir, remove, getcwd, rename
 from re         import findall
+from time       import sleep
 from subprocess import Popen, PIPE
 
 
@@ -103,6 +104,16 @@ def does_ftp_path_exist (target_dir):
 
     return ret_val
 
+
+def link_file_to_itunes (file_name, file_path):
+    absolute_path = '/Volumes/avdeshpa'
+    absolute_path = absolute_path + file_path + file_name
+    print absolute_path
+    ret_val = Popen ('open -a iTunes -g "' + absolute_path + '"', shell=True, stdout=PIPE).stdout.read()
+    sleep (1)
+    Popen ('osascript -e \'tell application "iTunes" to stop\'', shell=True, stdout=PIPE).stdout.read()
+    print ret_val
+
 # Upload file via LFTP
 def upload_file (file_name, target_dir):
 
@@ -117,6 +128,9 @@ def upload_file (file_name, target_dir):
             local_file_size  = path.getsize (file_name)
             if (remote_file_size == local_file_size):
                 remove (file_name)
+                
+                # Link the file to iTunes
+                link_file_to_itunes (file_name, target_dir)
                 print 'File transfer successful'
             else:
                 print 'File transfer failed. Result = ' + return_result
@@ -127,6 +141,7 @@ def upload_file (file_name, target_dir):
         Popen ('echo ' + file_name + ' >> link_to_itunes.txt', shell=True, stdout=PIPE).stdout.read()
     else:
         print 'Path does not exist ' + target_dir
+
 
 
 for i in onlyfiles:

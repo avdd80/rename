@@ -116,6 +116,8 @@ def link_file_to_itunes (file_name, file_path):
 
 # Upload file via LFTP
 def upload_file (file_name, target_dir):
+    
+    transfer_failed = 0
 
     # Check if the path exists
     if (does_ftp_path_exist('"' + target_dir + '"')):
@@ -134,13 +136,18 @@ def upload_file (file_name, target_dir):
                 print 'File transfer successful'
             else:
                 print 'File transfer failed. Result = ' + return_result
+                transfer_failed = 1
         else:
             print 'File transfer failed. Result = ' + return_result
-        
-        # List the files to be linked to iTunes
-        Popen ('echo ' + file_name + ' >> link_to_itunes.txt', shell=True, stdout=PIPE).stdout.read()
+            transfer_failed = 1
+
     else:
         print 'Path does not exist ' + target_dir
+        transfer_failed = 1
+
+    if (transfer_failed == 1):
+        # List the files to be manually linked to iTunes
+        Popen ('echo ' + file_name + ' >> link_to_itunes.txt', shell=True, stdout=PIPE).stdout.read()
 
 
 

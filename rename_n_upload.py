@@ -98,7 +98,6 @@ def does_ftp_path_exist (target_dir):
     if (path.isfile ('path_exists')):
         remove ('path_exists')
         ret_val = 1
-        print 'Path exists - check'
     else:
         print 'Path does not exist - check'
 
@@ -114,10 +113,37 @@ def link_file_to_itunes (file_name, file_path):
     Popen ('osascript -e \'tell application "iTunes" to stop\'', shell=True, stdout=PIPE).stdout.read()
     print ret_val
 
-# Upload file via LFTP
-def upload_file (file_name, target_dir):
+
+# If the file name has an apostrophe ('), LFTP upload fails. Try
+# copying the file via MAC file system.
+def copy_file_mac_copy (file_name, target_dir):
     
-    transfer_failed = 0
+    transfer_status = 0
+    
+    absolute_path = '"/Volumes/avdeshpa' + target_dir + file_name + '"'
+
+    Popen ('cp -f "' + file_name + '" ' + absolute_path, shell=True, stdout=PIPE).stdout.read()
+
+    local_file_size   = path.getsize (file_name)
+    remote_file_size  = path.getsize (absolute_path[1:len(absolute_path)-1])
+
+
+    if (isfile (absolute_path[1:len(absolute_path)-1])):
+
+        if (local_file_size == remote_file_size):
+            remove (file_name)
+            transfer_status = 1
+    else:
+        print 'Target path does not exist: ' + absolute_path
+    return transfer_status
+
+
+# Upload file via LFTP
+def upload_file_FTP (file_name, target_dir):
+
+    
+    transfer_status = 1
+
 
     # Check if the path exists
     if (does_ftp_path_exist('"' + target_dir + '"')):
@@ -130,25 +156,41 @@ def upload_file (file_name, target_dir):
             local_file_size  = path.getsize (file_name)
             if (remote_file_size == local_file_size):
                 remove (file_name)
-                
-                # Link the file to iTunes
-                link_file_to_itunes (file_name, target_dir)
-                print 'File transfer successful'
             else:
                 print 'File transfer failed. Result = ' + return_result
-                transfer_failed = 1
+                transfer_status = 0
         else:
             print 'File transfer failed. Result = ' + return_result
-            transfer_failed = 1
+            transfer_status = 0
 
     else:
         print 'Path does not exist ' + target_dir
-        transfer_failed = 1
+        transfer_status = 0
 
-    if (transfer_failed == 1):
+    return transfer_status
+
+# This function decides whether to use FTP or MAC copy to upload the file
+# It also links the media file to iTunes
+def upload_file (file_name, target_dir):
+
+    
+    # If the filename has an apostrophe, use MAC copy
+    if (file_name.find ('\'') > 0):
+        transfer_status = copy_file_mac_copy (file_name, target_dir)
+    # else use FTP to upload the file
+    else:
+        transfer_status = upload_file_FTP (file_name, target_dir)
+
+    if (transfer_status == 1):
+        
+        print 'File transfer successful'
+        
+        # Link the file to iTunes
+        link_file_to_itunes (file_name, target_dir)
+    else:
+        print 'File transfer failed!'
         # List the files to be manually linked to iTunes
         Popen ('echo ' + file_name + ' >> link_to_itunes.txt', shell=True, stdout=PIPE).stdout.read()
-
 
 
 for i in onlyfiles:
@@ -164,7 +206,7 @@ for i in onlyfiles:
         new_filename_mp4 = rename_file (i, '.mp4')
         if (old_filename_mp4 != new_filename_mp4):
             rename (old_filename_mp4, new_filename_mp4)
-            upload_file (new_filename_mp4, show_name_path)
+        upload_file (new_filename_mp4, show_name_path)
 
     # Check if the extension is .avi
     if (i.find ('.avi') == length - len('.avi')):

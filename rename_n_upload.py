@@ -87,6 +87,8 @@ def does_ftp_path_exist (target_dir):
 
     ret_val = 0
 
+    print 'Uploading via FTP'
+
     # Remove path_exists file
     if (path.isfile ('path_exists')):
         remove ('path_exists')
@@ -119,6 +121,8 @@ def link_file_to_itunes (file_name, file_path):
 def copy_file_mac_copy (file_name, target_dir):
     
     transfer_status = 0
+    
+    print 'Uploading via MAC Copy'
     
     absolute_path = '"/Volumes/avdeshpa' + target_dir + file_name + '"'
 
@@ -175,11 +179,13 @@ def upload_file (file_name, target_dir):
 
     
     # If the filename has an apostrophe, use MAC copy
-    if (file_name.find ('\'') > 0):
-        transfer_status = copy_file_mac_copy (file_name, target_dir)
+    #    if (file_name.find ('\'') > 0):
+    #       transfer_status = copy_file_mac_copy (file_name, target_dir)
     # else use FTP to upload the file
-    else:
-        transfer_status = upload_file_FTP (file_name, target_dir)
+    #else:
+    #    transfer_status = upload_file_FTP (file_name, target_dir)
+
+    transfer_status = copy_file_mac_copy (file_name, target_dir)
 
     if (transfer_status == 1):
         
@@ -197,10 +203,12 @@ for i in onlyfiles:
     length = len (i)
     
     global show_name_path
+    
+    lower_case_path = i.lower()
 
     
     # Check if the extension is .mp4
-    if (i.find ('.mp4') == length - len('.mp4')):
+    if (lower_case_path.find ('.mp4') == length - len('.mp4')):
         old_filename_mp4 = i
         print i
         new_filename_mp4 = rename_file (i, '.mp4')
@@ -209,14 +217,14 @@ for i in onlyfiles:
         upload_file (new_filename_mp4, show_name_path)
 
     # Check if the extension is .avi
-    if (i.find ('.avi') == length - len('.avi')):
+    if (lower_case_path.find ('.avi') == length - len('.avi')):
         old_filename_avi = i
         new_filename_avi = rename_file (i, '.avi')
         if (old_filename_avi != new_filename_avi):
             rename (old_filename_avi, new_filename_avi)
 
     # Check if the extension is .m4v
-    if (i.find ('.m4v') == length - len('.m4v')):
+    if (lower_case_path.find ('.m4v') == length - len('.m4v')):
         new_filename_mp4 = rename_file (i, '.mp4')
         old_filename_m4v = i
         rename (old_filename_m4v, new_filename_mp4)
